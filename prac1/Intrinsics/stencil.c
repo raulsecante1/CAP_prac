@@ -34,7 +34,7 @@ void ApplyStencil_Intrinceca(unsigned char *img_in, unsigned char *img_out, int 
 
 	//sse_cte = _mm_set1_epi8(8)
 
-	for (int i = 1; i < height-1; i++)
+	for (int i = 1; i < height-1; i+=16)
 		for (int j = 1; j < width-1; j++) {
 	        sse_1 = _mm_loadu_si128((const __m128i_u *)&img_in[(i-1)*width + j-1]);
 			sse_2 = _mm_loadu_si128((const __m128i_u *)&img_in[(i-1)*width + j]);
