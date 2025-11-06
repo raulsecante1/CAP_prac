@@ -51,6 +51,7 @@ static void step(unsigned int source_x, unsigned int source_y, const float *rest
 
     float dt = dx2 * dy2 / (2.0f * a * (dx2 + dy2));
 
+    #pragma omp parallel for// collapse(2)
     for (unsigned int y = 1; y < N-1; ++y) {
         for (unsigned int x = 1; x < N-1; ++x) {
             next[y*N+x] = current[y*N+x] + a * dt *
@@ -65,9 +66,11 @@ static void step(unsigned int source_x, unsigned int source_y, const float *rest
 static float diff(const float *restrict current, const float *restrict next) {
     float maxdiff = 0.0f;
 
+    #pragma omp parallel for reduction (max:maxdiff)
     for (unsigned int y = 1; y < N-1; ++y) {
         for (unsigned int x = 1; x < N-1; ++x) {
-            maxdiff = fmaxf(maxdiff, fabsf(next[y*N+x] - current[y*N+x]));
+            float aux = fabsf(next[y*N+x] - current[y*N+x]);
+            maxdiff = fmaxf(maxdiff, aux);
         }
     }
     return maxdiff;
