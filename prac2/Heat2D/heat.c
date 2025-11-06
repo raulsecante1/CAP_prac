@@ -51,7 +51,7 @@ static void step(unsigned int source_x, unsigned int source_y, const float *rest
 
     float dt = dx2 * dy2 / (2.0f * a * (dx2 + dy2));
 
-    #pragma omp parallel for// collapse(2)
+    #pragma omp parallel for// collapse(2) schedule(static)
     for (unsigned int y = 1; y < N-1; ++y) {
         for (unsigned int x = 1; x < N-1; ++x) {
             next[y*N+x] = current[y*N+x] + a * dt *
