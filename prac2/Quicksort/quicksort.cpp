@@ -48,9 +48,17 @@ void quickSort(int arr[], int low, int high){
 	if(low < high){
 		int pivot = arr[high];
 		int pos = partition(arr, low, high, pivot);
-		
-		quickSort(arr, low, pos-1);
-		quickSort(arr, pos+1, high);
+		#pragma omp parallel
+		{
+			#pragma omp single
+			{
+		        quickSort(arr, low, pos-1);
+			}
+			#pragma omp single
+			{
+				quickSort(arr, pos+1, high);
+			}
+		}
 	}
 }
 
