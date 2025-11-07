@@ -185,6 +185,7 @@ static void react ( float * d, float * u, float * v )
 		}
 	}
 
+	#pragma omp simd
 	for ( i=0 ; i<size ; i++ ) {
 		u[i] = v[i] = d[i] = 0.0f;
 	}
