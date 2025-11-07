@@ -48,17 +48,10 @@ void quickSort(int arr[], int low, int high){
 	if(low < high){
 		int pivot = arr[high];
 		int pos = partition(arr, low, high, pivot);
-		#pragma omp parallel
-		{
-			#pragma omp single
-			{
-		        quickSort(arr, low, pos-1);
-			}
-			#pragma omp single
-			{
-				quickSort(arr, pos+1, high);
-			}
-		}
+		#pragma omp task shared(arr) firstprivate(low, pos)
+	        quickSort(arr, low, pos-1);
+		#pragma omp task shared(arr) firstprivate(low, pos)
+			quickSort(arr, pos+1, high);
 	}
 }
 
@@ -86,7 +79,11 @@ int main(int argc, char *argv[]){
 	init(arr, n);
 
 	t1=omp_get_wtime();
-	quickSort(arr, 0 , n-1);
+	#pragma omp parallel
+		{
+			#pragma omp single
+				quickSort(arr, 0 , n-1);
+		}
 	t2=omp_get_wtime()-t1;
 
 	cout << "quicksort took " << t2 << " sec. to complete" << endl;
