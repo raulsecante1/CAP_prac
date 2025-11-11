@@ -11,6 +11,7 @@ static void add_source(unsigned int n, float * x, const float * s, float dt)
 {
     unsigned int size = (n + 2) * (n + 2);
 
+    #pragma omp parallel for
     for (unsigned int i = 0; i < size; i++) {
         x[i] += dt * s[i];
     }
@@ -19,6 +20,7 @@ static void add_source(unsigned int n, float * x, const float * s, float dt)
 static void set_bnd(unsigned int n, boundary b, float * x)
 {
 
+    #pragma omp parallel for
     for (unsigned int i = 1; i <= n; i++) {
         x[IX(0, i)]     = b == VERTICAL ? -x[IX(1, i)] : x[IX(1, i)];
         x[IX(n + 1, i)] = b == VERTICAL ? -x[IX(n, i)] : x[IX(n, i)];
@@ -36,7 +38,7 @@ static void lin_solve(unsigned int n, boundary b, float * x, const float * x0, f
 
 
     for (unsigned int k = 0; k < 20; k++) {
-	for (unsigned int i = 1; i <= n; i++) {
+	    for (unsigned int i = 1; i <= n; i++) {
             for (unsigned int j = 1; j <= n; j++) {
                 x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] +
                                                    x[IX(i + 1, j)] +
@@ -62,9 +64,10 @@ static void advect(unsigned int n, boundary b, float * d, const float * d0, cons
     float dt0 = dt * n;
 
 
+    #pragma omp parallel for firstprivate(dt0, i0, j1, s1, s0, t1, t0)
     for (unsigned int j = 1; j <= n; j++) {
 
-    for (unsigned int i = 1; i <= n; i++) {
+        for (unsigned int i = 1; i <= n; i++) {
             x = i - dt0 * u[IX(i, j)];
             y = j - dt0 * v[IX(i, j)];
             if (x < 0.5f) {
@@ -95,8 +98,9 @@ static void advect(unsigned int n, boundary b, float * d, const float * d0, cons
 static void project(unsigned int n, float *u, float *v, float *p, float *div)
 {
 
-        for (unsigned int j = 1; j <= n; j++) {
-    for (unsigned int i = 1; i <= n; i++) {
+    #pragma omp parallel for
+    for (unsigned int j = 1; j <= n; j++) {
+        for (unsigned int i = 1; i <= n; i++) {
             div[IX(i, j)] = -0.5f * (u[IX(i + 1, j)] - u[IX(i - 1, j)] +
                                      v[IX(i, j + 1)] - v[IX(i, j - 1)]) / n;
             p[IX(i, j)] = 0;
@@ -108,8 +112,9 @@ static void project(unsigned int n, float *u, float *v, float *p, float *div)
     lin_solve(n, NONE, p, div, 1, 4);
 
 
-        for (unsigned int j = 1; j <= n; j++) {
-    for (unsigned int i = 1; i <= n; i++) {
+    #pragma omp parallel for
+    for (unsigned int j = 1; j <= n; j++) {
+        for (unsigned int i = 1; i <= n; i++) {
             u[IX(i, j)] -= 0.5f * n * (p[IX(i + 1, j)] - p[IX(i - 1, j)]);
             v[IX(i, j)] -= 0.5f * n * (p[IX(i, j + 1)] - p[IX(i, j - 1)]);
         }

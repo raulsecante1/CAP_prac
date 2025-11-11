@@ -59,6 +59,7 @@ static void clear_data ( void )
 {
 	int i, size=(N+2)*(N+2);
 
+	#pragma omp simd
 	for ( i=0 ; i<size ; i++ ) {
 		u[i] = v[i] = u_prev[i] = v_prev[i] = dens[i] = dens_prev[i] = 0.0f;
 	}
@@ -92,6 +93,7 @@ static void react ( float * d, float * u, float * v )
 	float max_density = 0.0f;
 
 	max_velocity2 = max_density = 0.0f;
+	#pragma omp simd
 	for ( i=0 ; i<size ; i++ ) {
 		if (max_velocity2 < u[i]*u[i] + v[i]*v[i]) {
 			max_velocity2 = u[i]*u[i] + v[i]*v[i];
@@ -101,6 +103,7 @@ static void react ( float * d, float * u, float * v )
 		}
 	}
 
+	#pragma omp simd
 	for ( i=0 ; i<size ; i++ ) {
 		u[i] = v[i] = d[i] = 0.0f;
 	}
