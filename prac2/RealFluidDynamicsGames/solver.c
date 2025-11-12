@@ -36,7 +36,7 @@ static void set_bnd(unsigned int n, boundary b, float * x)
 static void lin_solve(unsigned int n, boundary b, float * x, const float * x0, float a, float c)
 {
 
-
+    //the original
     for (unsigned int k = 0; k < 20; k++) {
 	    for (unsigned int i = 1; i <= n; i++) {
             for (unsigned int j = 1; j <= n; j++) {
@@ -48,6 +48,38 @@ static void lin_solve(unsigned int n, boundary b, float * x, const float * x0, f
         }
         set_bnd(n, b, x);
     }
+
+    for (unsigned int k = 0; k < 20; k++) {
+        //the black
+        #pragma omp parallel for collapse(2)
+        for (unsigned int i = 1; i <= n; i++) {
+            for (unsigned int j = 1; j <= n; j++) {
+                if ((i + j) % 2 == 0)
+                {
+                    x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] +
+                                                       x[IX(i + 1, j)] +
+                                                       x[IX(i, j - 1)] +
+                                                       x[IX(i, j + 1)])) / c;
+                }
+            }
+        }
+
+        //the red
+        #pragma omp parallel for collapse(2)
+	    for (unsigned int i = 1; i <= n; i++) {
+            for (unsigned int j = 1; j <= n; j++) {
+                if ((i + j) % 2 == 1)
+                {
+                    x[IX(i, j)] = (x0[IX(i, j)] + a * (x[IX(i - 1, j)] +
+                                                       x[IX(i + 1, j)] +
+                                                       x[IX(i, j - 1)] +
+                                                       x[IX(i, j + 1)])) / c;
+                }
+            }
+        }
+        set_bnd(n, b, x);
+    }    
+
 }
 
 static void diffuse(unsigned int n, boundary b, float * x, const float * x0, float diff, float dt)
