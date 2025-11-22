@@ -69,16 +69,39 @@ static void sliced_steps(unsigned int source_x, unsigned int source_y, const flo
 
 	//float *buffer_recv = (float*)malloc(2*N*sizeof(float));
 	
-	unsigned int lower_bound = slice * slice_ind + 1;
-	unsigned int upper_bound = slice * (slice_ind + 1) - 1;
-
-	if (slice_ind >= 0){  //first block dosent receive
-		MPI_Recv(top_row, N, MPI_FLOAT, slice_ind-1, 0, MPI_COMM_WORLD);  // tag 0 for the top row
-		MPI_Recv(botom_row, N, MPI_FLOAT, slice_ind+1, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
+	unsigned int upper_bound = slice * slice_ind;
+	unsigned int lower_bound = slice * (slice_ind + 1);
+	if (upper_bound > N) {
+		upperbound = N;
 	}
 
-	for (unsigned int y = 1; y < N-1; ++y) {
-		for (unsigned int x = lower_bound; x < upper_bound; ++x) {
+	unsigned int pre_ind;
+	unsigned int nxt_ind;
+	if (slice_ind == 0) {
+		pre_ind = (N + slice - 1) / slice - 1;
+	}else{
+		pre_ind = slice_ind - 1;
+	}
+
+	if (slice_ind == (N + slice - 1) / slice - 1) {
+		nxt_ind = 0;
+	}else{
+		nxt_ind = slice_ind + 1;
+	}
+
+	for (int ind = 0; ind < N, ind++){
+		top_row[ind] = current[idx(ind, slice_ind, N)];
+		bottom_row[ind] = current[idx(ind, upper_bound, N)];
+	}
+	
+	MPI_Send(top_row, N, MPI_FLOAT, pre_ind, 0, MPI_COMM_WORLD);  // tag 0 for the top row
+	MPI_Send(botom_row, N, MPI_FLOAT, nxt_ind, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
+	
+	MPI_Recv(top_row, N, MPI_FLOAT, pre_ind, 0, MPI_COMM_WORLD);  // tag 0 for the top row
+	MPI_Recv(botom_row, N, MPI_FLOAT, nxt_ind, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
+
+	for (unsigned int y = lower_bound; y < upper_bound; ++y) {
+		for (unsigned int x = 1; x < N-1; ++x) {
 			if ((y == source_y) && (x == source_x)) {
 				continue;
 			}
@@ -89,10 +112,6 @@ static void sliced_steps(unsigned int source_x, unsigned int source_y, const flo
 		}
 	}
 
-	if (slice_ind >= 0){  //last block dosent send
-		MPI_Send(top_row, N, MPI_FLOAT, slice_ind-1, 0, MPI_COMM_WORLD);  // tag 0 for the top row
-		MPI_Send(top_row, N, MPI_FLOAT, slice_ind+1, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
-	}
 }
 
 
