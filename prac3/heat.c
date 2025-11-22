@@ -72,8 +72,10 @@ static void sliced_steps(unsigned int source_x, unsigned int source_y, const flo
 	unsigned int lower_bound = slice * slice_ind + 1;
 	unsigned int upper_bound = slice * (slice_ind + 1) - 1;
 
-	MPI_Recv(top_row, N, MPI_FLOAT, slice_ind, 0, MPI_COMM_WORLD);  // tag 0 for the top row
-	MPI_Recv(top_row, N, MPI_FLOAT, slice_ind, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
+	if (slice_ind >= 0){  //first block dosent receive
+		MPI_Recv(top_row, N, MPI_FLOAT, slice_ind-1, 0, MPI_COMM_WORLD);  // tag 0 for the top row
+		MPI_Recv(top_row, N, MPI_FLOAT, slice_ind-1, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
+	}
 
 	for (unsigned int y = 1; y < N-1; ++y) {
 		for (unsigned int x = lower_bound; x < upper_bound; ++x) {
@@ -85,6 +87,11 @@ static void sliced_steps(unsigned int source_x, unsigned int source_y, const flo
 			current[idx(x+1, y, N)] +
 			current[idx(x, y+1, N)]) / 4.0f;
 		}
+	}
+
+	if (slice_ind >= 0){  //last block dosent send
+		MPI_Send(top_row, N, MPI_FLOAT, slice_ind+1, 0, MPI_COMM_WORLD);  // tag 0 for the top row
+		MPI_Send(top_row, N, MPI_FLOAT, slice_ind+1, 1, MPI_COMM_WORLD);  // tag 1 for the bottom row
 	}
 }
 
